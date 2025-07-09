@@ -1,0 +1,299 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage x:Class="PictureLinkViewer.Views.AdminDashboardPage"
+             xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodel="clr-namespace:PictureLinkViewer.ViewModels"
+             x:DataType="viewmodel:AdminDashboardViewModel"
+             Title="{Binding Title}"
+             BackgroundColor="{DynamicResource PageBackgroundColor}">
+
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Logout" 
+                     Command="{Binding LogoutCommand}" 
+                     IconImageSource="logout.png" />
+    </ContentPage.ToolbarItems>
+
+    <Grid RowDefinitions="Auto,*">
+        
+        <!-- Header -->
+        <StackLayout Grid.Row="0" Padding="20,10" BackgroundColor="{DynamicResource Primary}">
+            <Label Text="{Binding CurrentUser.DisplayName, StringFormat='Admin Dashboard - {0}'}" 
+                   FontSize="18" 
+                   FontAttributes="Bold" 
+                   TextColor="White" 
+                   HorizontalOptions="Center" />
+        </StackLayout>
+
+        <!-- Main Content -->
+        <ScrollView Grid.Row="1">
+            <StackLayout Padding="20" Spacing="30">
+
+                <!-- Create/Edit Form -->
+                <Border BackgroundColor="White"
+                        StrokeThickness="1"
+                        Stroke="{DynamicResource Gray200}">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="15"/>
+                    </Border.StrokeShape>
+                    
+                    <StackLayout Padding="20" Spacing="20">
+                        
+                        <!-- Form Header -->
+                        <Label Text="{Binding IsEditMode, Converter={StaticResource BoolToTextConverter}, ConverterParameter='Edit Picture Link|Create New Picture Link'}" 
+                               FontSize="20" 
+                               FontAttributes="Bold" 
+                               TextColor="{DynamicResource Gray900}" 
+                               HorizontalOptions="Center" />
+
+                        <!-- Title Entry -->
+                        <StackLayout Spacing="5">
+                            <Label Text="Title *" 
+                                   FontSize="16" 
+                                   TextColor="{DynamicResource Gray900}" />
+                            <Border BackgroundColor="{DynamicResource Gray100}"
+                                    StrokeThickness="1"
+                                    Stroke="{DynamicResource Gray300}">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="8"/>
+                                </Border.StrokeShape>
+                                <Entry Text="{Binding NewTitle}" 
+                                       Placeholder="Enter title" 
+                                       BackgroundColor="Transparent"
+                                       HeightRequest="50" />
+                            </Border>
+                        </StackLayout>
+
+                        <!-- Description Entry -->
+                        <StackLayout Spacing="5">
+                            <Label Text="Description" 
+                                   FontSize="16" 
+                                   TextColor="{DynamicResource Gray900}" />
+                            <Border BackgroundColor="{DynamicResource Gray100}"
+                                    StrokeThickness="1"
+                                    Stroke="{DynamicResource Gray300}">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="8"/>
+                                </Border.StrokeShape>
+                                <Editor Text="{Binding NewDescription}" 
+                                        Placeholder="Enter description (optional)" 
+                                        BackgroundColor="Transparent"
+                                        HeightRequest="80" />
+                            </Border>
+                        </StackLayout>
+
+                        <!-- Button Label Entry -->
+                        <StackLayout Spacing="5">
+                            <Label Text="Button Label *" 
+                                   FontSize="16" 
+                                   TextColor="{DynamicResource Gray900}" />
+                            <Border BackgroundColor="{DynamicResource Gray100}"
+                                    StrokeThickness="1"
+                                    Stroke="{DynamicResource Gray300}">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="8"/>
+                                </Border.StrokeShape>
+                                <Entry Text="{Binding NewButtonLabel}" 
+                                       Placeholder="Enter button label" 
+                                       BackgroundColor="Transparent"
+                                       HeightRequest="50" />
+                            </Border>
+                        </StackLayout>
+
+                        <!-- Target URL Entry -->
+                        <StackLayout Spacing="5">
+                            <Label Text="Target URL *" 
+                                   FontSize="16" 
+                                   TextColor="{DynamicResource Gray900}" />
+                            <Border BackgroundColor="{DynamicResource Gray100}"
+                                    StrokeThickness="1"
+                                    Stroke="{DynamicResource Gray300}">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="8"/>
+                                </Border.StrokeShape>
+                                <Entry Text="{Binding NewTargetUrl}" 
+                                       Placeholder="Enter target URL" 
+                                       Keyboard="Url"
+                                       BackgroundColor="Transparent"
+                                       HeightRequest="50" />
+                            </Border>
+                        </StackLayout>
+
+                        <!-- Image Selection -->
+                        <StackLayout Spacing="10">
+                            <Label Text="Image *" 
+                                   FontSize="16" 
+                                   TextColor="{DynamicResource Gray900}" />
+                            
+                            <Button Text="Select Image" 
+                                    FontSize="16" 
+                                    BackgroundColor="{DynamicResource Gray200}"
+                                    TextColor="{DynamicResource Gray800}"
+                                    Command="{Binding SelectImageCommand}" />
+                            
+                            <Label Text="{Binding SelectedImagePath, StringFormat='Selected: {0}'}" 
+                                   FontSize="12" 
+                                   TextColor="{DynamicResource Gray600}" 
+                                   IsVisible="{Binding SelectedImagePath, Converter={StaticResource StringToBoolConverter}}" />
+                        </StackLayout>
+
+                        <!-- Action Buttons -->
+                        <StackLayout Orientation="Horizontal" Spacing="10" HorizontalOptions="Center">
+                            
+                            <!-- Save/Update Button -->
+                            <Border BackgroundColor="{DynamicResource Primary}"
+                                    StrokeThickness="0"
+                                    Stroke="Transparent">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="20"/>
+                                </Border.StrokeShape>
+                                
+                                <Button Text="{Binding IsEditMode, Converter={StaticResource BoolToTextConverter}, ConverterParameter='Update|Create'}" 
+                                        FontSize="16" 
+                                        FontAttributes="Bold"
+                                        TextColor="White" 
+                                        BackgroundColor="Transparent"
+                                        HeightRequest="45" 
+                                        WidthRequest="100"
+                                        Command="{Binding IsEditMode, Converter={StaticResource BoolToCommandConverter}, ConverterParameter='{Binding UpdatePictureLinkCommand}|{Binding CreatePictureLinkCommand}'}"
+                                        IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}" />
+                            </Border>
+
+                            <!-- Cancel Button (Edit mode only) -->
+                            <Border BackgroundColor="{DynamicResource Gray400}"
+                                    StrokeThickness="0"
+                                    Stroke="Transparent"
+                                    IsVisible="{Binding IsEditMode}">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="20"/>
+                                </Border.StrokeShape>
+                                
+                                <Button Text="Cancel" 
+                                        FontSize="16" 
+                                        FontAttributes="Bold"
+                                        TextColor="White" 
+                                        BackgroundColor="Transparent"
+                                        HeightRequest="45" 
+                                        WidthRequest="100"
+                                        Command="{Binding CancelEditCommand}" />
+                            </Border>
+                        </StackLayout>
+
+                    </StackLayout>
+                </Border>
+
+                <!-- Picture Links List -->
+                <StackLayout Spacing="15">
+                    
+                    <Label Text="Existing Picture Links" 
+                           FontSize="20" 
+                           FontAttributes="Bold" 
+                           TextColor="{DynamicResource Gray900}" />
+
+                    <CollectionView ItemsSource="{Binding PictureLinks}" 
+                                    BackgroundColor="Transparent">
+                        
+                        <CollectionView.EmptyView>
+                            <StackLayout Padding="20" HorizontalOptions="Center">
+                                <Label Text="No picture links created yet" 
+                                       FontSize="16" 
+                                       TextColor="{DynamicResource Gray600}" 
+                                       HorizontalOptions="Center" />
+                            </StackLayout>
+                        </CollectionView.EmptyView>
+
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Padding="0,5">
+                                    
+                                    <Border BackgroundColor="White"
+                                            StrokeThickness="1"
+                                            Stroke="{DynamicResource Gray200}">
+                                        <Border.StrokeShape>
+                                            <RoundRectangle CornerRadius="10"/>
+                                        </Border.StrokeShape>
+                                        
+                                        <StackLayout Padding="15" Spacing="10">
+                                            
+                                            <!-- Image and Content -->
+                                            <Grid ColumnDefinitions="80,*" ColumnSpacing="15">
+                                                
+                                                <!-- Thumbnail -->
+                                                <Border Grid.Column="0" 
+                                                        StrokeThickness="0" 
+                                                        Stroke="Transparent">
+                                                    <Border.StrokeShape>
+                                                        <RoundRectangle CornerRadius="8"/>
+                                                    </Border.StrokeShape>
+                                                    <Image Source="{Binding ImageUrl}" 
+                                                           Aspect="AspectFill" 
+                                                           HeightRequest="60" 
+                                                           WidthRequest="60" />
+                                                </Border>
+
+                                                <!-- Details -->
+                                                <StackLayout Grid.Column="1" Spacing="5" VerticalOptions="Center">
+                                                    <Label Text="{Binding Title}" 
+                                                           FontSize="16" 
+                                                           FontAttributes="Bold" 
+                                                           TextColor="{DynamicResource Gray900}" />
+                                                    
+                                                    <Label Text="{Binding ButtonLabel}" 
+                                                           FontSize="14" 
+                                                           TextColor="{DynamicResource Primary}" />
+                                                    
+                                                    <Label Text="{Binding TargetUrl}" 
+                                                           FontSize="12" 
+                                                           TextColor="{DynamicResource Gray600}" 
+                                                           LineBreakMode="TailTruncation" />
+                                                </StackLayout>
+                                            </Grid>
+
+                                            <!-- Action Buttons -->
+                                            <StackLayout Orientation="Horizontal" Spacing="10" HorizontalOptions="End">
+                                                
+                                                <Button Text="Edit" 
+                                                        FontSize="14" 
+                                                        BackgroundColor="{DynamicResource Primary}"
+                                                        TextColor="White"
+                                                        HeightRequest="35"
+                                                        WidthRequest="70"
+                                                        Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodel:AdminDashboardViewModel}}, Path=EditPictureLinkCommand}"
+                                                        CommandParameter="{Binding .}" />
+                                                
+                                                <Button Text="Delete" 
+                                                        FontSize="14" 
+                                                        BackgroundColor="Red"
+                                                        TextColor="White"
+                                                        HeightRequest="35"
+                                                        WidthRequest="70"
+                                                        Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodel:AdminDashboardViewModel}}, Path=DeletePictureLinkCommand}"
+                                                        CommandParameter="{Binding .}" />
+                                            </StackLayout>
+
+                                        </StackLayout>
+                                    </Border>
+                                </Grid>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </StackLayout>
+
+                <!-- Error Message -->
+                <Label Text="{Binding ErrorMessage}" 
+                       TextColor="Red" 
+                       FontSize="14" 
+                       HorizontalOptions="Center" 
+                       IsVisible="{Binding HasError}" />
+
+                <!-- Loading Indicator -->
+                <ActivityIndicator IsRunning="{Binding IsBusy}" 
+                                   IsVisible="{Binding IsBusy}" 
+                                   Color="{DynamicResource Primary}" 
+                                   HorizontalOptions="Center" />
+
+            </StackLayout>
+        </ScrollView>
+
+    </Grid>
+
+</ContentPage>

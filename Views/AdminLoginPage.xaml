@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage x:Class="PictureLinkViewer.Views.AdminLoginPage"
+             xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodel="clr-namespace:PictureLinkViewer.ViewModels"
+             x:DataType="viewmodel:AdminLoginViewModel"
+             Title="{Binding Title}"
+             BackgroundColor="{DynamicResource PageBackgroundColor}">
+
+    <ScrollView>
+        <Grid RowDefinitions="*,Auto,*" Padding="30,0">
+            
+            <StackLayout Grid.Row="1" Spacing="30">
+                
+                <!-- Header -->
+                <StackLayout Spacing="10" HorizontalOptions="Center">
+                    <Image Source="dotnet_bot.png" 
+                           HeightRequest="80" 
+                           WidthRequest="80" 
+                           HorizontalOptions="Center" />
+                    
+                    <Label Text="Admin Login" 
+                           FontSize="28" 
+                           FontAttributes="Bold" 
+                           HorizontalOptions="Center" 
+                           TextColor="{DynamicResource Primary}" />
+                    
+                    <Label Text="Enter your admin credentials" 
+                           FontSize="16" 
+                           HorizontalOptions="Center" 
+                           TextColor="{DynamicResource Gray600}" />
+                </StackLayout>
+
+                <!-- Login Form -->
+                <StackLayout Spacing="20">
+                    
+                    <!-- Email Entry -->
+                    <StackLayout Spacing="5">
+                        <Label Text="Email" 
+                               FontSize="16" 
+                               TextColor="{DynamicResource Gray900}" />
+                        <Border BackgroundColor="{DynamicResource Gray100}"
+                                StrokeThickness="1"
+                                Stroke="{DynamicResource Gray300}">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="8"/>
+                            </Border.StrokeShape>
+                            <Entry Text="{Binding Email}" 
+                                   Placeholder="Enter your email" 
+                                   Keyboard="Email" 
+                                   BackgroundColor="Transparent"
+                                   HeightRequest="50" />
+                        </Border>
+                    </StackLayout>
+
+                    <!-- Password Entry -->
+                    <StackLayout Spacing="5">
+                        <Label Text="Password" 
+                               FontSize="16" 
+                               TextColor="{DynamicResource Gray900}" />
+                        <Border BackgroundColor="{DynamicResource Gray100}"
+                                StrokeThickness="1"
+                                Stroke="{DynamicResource Gray300}">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="8"/>
+                            </Border.StrokeShape>
+                            <Grid ColumnDefinitions="*,Auto">
+                                <Entry Grid.Column="0"
+                                       Text="{Binding Password}" 
+                                       Placeholder="Enter your password" 
+                                       IsPassword="{Binding IsPasswordVisible, Converter={StaticResource InvertedBoolConverter}}"
+                                       BackgroundColor="Transparent"
+                                       HeightRequest="50" />
+                                <Button Grid.Column="1"
+                                        Text="{Binding IsPasswordVisible, Converter={StaticResource BoolToTextConverter}, ConverterParameter='Hide|Show'}"
+                                        FontSize="14"
+                                        BackgroundColor="Transparent"
+                                        TextColor="{DynamicResource Primary}"
+                                        Command="{Binding TogglePasswordVisibilityCommand}" />
+                            </Grid>
+                        </Border>
+                    </StackLayout>
+
+                    <!-- Login Button -->
+                    <Border BackgroundColor="{DynamicResource Primary}"
+                            StrokeThickness="0"
+                            Stroke="Transparent"
+                            Margin="0,20,0,0">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="25"/>
+                        </Border.StrokeShape>
+                        
+                        <Button Text="Login" 
+                                FontSize="18" 
+                                FontAttributes="Bold"
+                                TextColor="White" 
+                                BackgroundColor="Transparent"
+                                HeightRequest="50" 
+                                Command="{Binding LoginCommand}"
+                                IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}" />
+                    </Border>
+
+                    <!-- Forgot Password -->
+                    <Button Text="Forgot Password?" 
+                            FontSize="14" 
+                            TextColor="{DynamicResource Primary}" 
+                            BackgroundColor="Transparent"
+                            Command="{Binding ForgotPasswordCommand}" />
+
+                </StackLayout>
+
+                <!-- Error Message -->
+                <Label Text="{Binding ErrorMessage}" 
+                       TextColor="Red" 
+                       FontSize="14" 
+                       HorizontalOptions="Center" 
+                       IsVisible="{Binding HasError}" />
+
+                <!-- Loading Indicator -->
+                <ActivityIndicator IsRunning="{Binding IsBusy}" 
+                                   IsVisible="{Binding IsBusy}" 
+                                   Color="{DynamicResource Primary}" />
+
+                <!-- Back Button -->
+                <Button Text="← Back to Selection" 
+                        FontSize="14" 
+                        TextColor="{DynamicResource Gray600}" 
+                        BackgroundColor="Transparent"
+                        Command="{Binding GoBackCommand}" />
+
+            </StackLayout>
+        </Grid>
+    </ScrollView>
+
+</ContentPage>

@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage x:Class="PictureLinkViewer.Views.LoginSelectionPage"
+             xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodel="clr-namespace:PictureLinkViewer.ViewModels"
+             x:DataType="viewmodel:LoginSelectionViewModel"
+             Title="{Binding Title}"
+             BackgroundColor="{DynamicResource PageBackgroundColor}">
+
+    <ScrollView>
+        <Grid RowDefinitions="*,Auto,*" Padding="30,0">
+            
+            <!-- Logo and Title Section -->
+            <StackLayout Grid.Row="1" Spacing="30">
+                <StackLayout Spacing="10" HorizontalOptions="Center">
+                    <Image Source="dotnet_bot.png" 
+                           HeightRequest="120" 
+                           WidthRequest="120" 
+                           HorizontalOptions="Center" />
+                    
+                    <Label Text="Picture Link Viewer" 
+                           FontSize="32" 
+                           FontAttributes="Bold" 
+                           HorizontalOptions="Center" 
+                           TextColor="{DynamicResource Primary}" />
+                    
+                    <Label Text="Choose your login type to continue" 
+                           FontSize="16" 
+                           HorizontalOptions="Center" 
+                           TextColor="{DynamicResource Gray600}" />
+                </StackLayout>
+
+                <!-- Login Options -->
+                <StackLayout Spacing="20" Margin="0,40,0,0">
+                    
+                    <!-- Admin Login Button -->
+                    <Border BackgroundColor="{DynamicResource Primary}"
+                            StrokeThickness="0"
+                            Stroke="Transparent">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="25"/>
+                        </Border.StrokeShape>
+                        
+                        <Button Text="Admin Login" 
+                                FontSize="18" 
+                                FontAttributes="Bold"
+                                TextColor="White" 
+                                BackgroundColor="Transparent"
+                                HeightRequest="50" 
+                                Command="{Binding GoToAdminLoginCommand}" />
+                    </Border>
+
+                    <!-- User Login Button -->
+                    <Border BackgroundColor="Transparent"
+                            StrokeThickness="2"
+                            Stroke="{DynamicResource Primary}">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="25"/>
+                        </Border.StrokeShape>
+                        
+                        <Button Text="User Login" 
+                                FontSize="18" 
+                                FontAttributes="Bold"
+                                TextColor="{DynamicResource Primary}" 
+                                BackgroundColor="Transparent"
+                                HeightRequest="50" 
+                                Command="{Binding GoToUserLoginCommand}" />
+                    </Border>
+                    
+                </StackLayout>
+
+                <!-- Error Message -->
+                <Label Text="{Binding ErrorMessage}" 
+                       TextColor="Red" 
+                       FontSize="14" 
+                       HorizontalOptions="Center" 
+                       IsVisible="{Binding HasError}" 
+                       Margin="0,20,0,0" />
+
+            </StackLayout>
+        </Grid>
+    </ScrollView>
+
+</ContentPage>

@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage x:Class="PictureLinkViewer.Views.UserDashboardPage"
+             xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodel="clr-namespace:PictureLinkViewer.ViewModels"
+             x:DataType="viewmodel:UserDashboardViewModel"
+             Title="{Binding Title}"
+             BackgroundColor="{DynamicResource PageBackgroundColor}">
+
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Logout" 
+                     Command="{Binding LogoutCommand}" 
+                     IconImageSource="logout.png" />
+    </ContentPage.ToolbarItems>
+
+    <Grid RowDefinitions="Auto,*,Auto">
+        
+        <!-- Header -->
+        <StackLayout Grid.Row="0" Padding="20,10" BackgroundColor="{DynamicResource Primary}">
+            <Label Text="{Binding CurrentUser.DisplayName, StringFormat='Welcome, {0}!'}" 
+                   FontSize="18" 
+                   FontAttributes="Bold" 
+                   TextColor="White" 
+                   HorizontalOptions="Center" />
+        </StackLayout>
+
+        <!-- Picture Links List -->
+        <RefreshView Grid.Row="1" 
+                     IsRefreshing="{Binding IsRefreshing}" 
+                     Command="{Binding RefreshPictureLinksCommand}">
+            
+            <CollectionView ItemsSource="{Binding PictureLinks}" 
+                            BackgroundColor="Transparent">
+                
+                <CollectionView.EmptyView>
+                    <StackLayout Padding="20" HorizontalOptions="Center" VerticalOptions="Center">
+                        <Label Text="No picture links available" 
+                               FontSize="18" 
+                               TextColor="{DynamicResource Gray600}" 
+                               HorizontalOptions="Center" />
+                        <Label Text="Check back later for new content" 
+                               FontSize="14" 
+                               TextColor="{DynamicResource Gray500}" 
+                               HorizontalOptions="Center" />
+                    </StackLayout>
+                </CollectionView.EmptyView>
+
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Grid Padding="15" RowDefinitions="Auto,*,Auto" ColumnDefinitions="*">
+                            
+                            <!-- Card Container -->
+                            <Border Grid.Row="0" Grid.RowSpan="3"
+                                    BackgroundColor="White"
+                                    StrokeThickness="0"
+                                    Stroke="Transparent"
+                                    Margin="0,5">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="15"/>
+                                </Border.StrokeShape>
+                                <Border.Shadow>
+                                    <Shadow Brush="Black" Opacity="0.1" Radius="10" Offset="0,2"/>
+                                </Border.Shadow>
+                                
+                                <StackLayout Padding="15" Spacing="15">
+                                    
+                                    <!-- Image -->
+                                    <Border StrokeThickness="0" Stroke="Transparent">
+                                        <Border.StrokeShape>
+                                            <RoundRectangle CornerRadius="10"/>
+                                        </Border.StrokeShape>
+                                        <Image Source="{Binding ImageUrl}" 
+                                               Aspect="AspectFill" 
+                                               HeightRequest="200" 
+                                               WidthRequest="300"
+                                               HorizontalOptions="Center">
+                                            <Image.GestureRecognizers>
+                                                <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodel:UserDashboardViewModel}}, Path=ViewImageFullscreenCommand}"
+                                                                      CommandParameter="{Binding ImageUrl}" />
+                                            </Image.GestureRecognizers>
+                                        </Image>
+                                    </Border>
+
+                                    <!-- Content -->
+                                    <StackLayout Spacing="10">
+                                        
+                                        <!-- Title -->
+                                        <Label Text="{Binding Title}" 
+                                               FontSize="20" 
+                                               FontAttributes="Bold" 
+                                               TextColor="{DynamicResource Gray900}" 
+                                               LineBreakMode="WordWrap" />
+
+                                        <!-- Description -->
+                                        <Label Text="{Binding Description}" 
+                                               FontSize="14" 
+                                               TextColor="{DynamicResource Gray600}" 
+                                               LineBreakMode="WordWrap" 
+                                               IsVisible="{Binding Description, Converter={StaticResource StringToBoolConverter}}" />
+
+                                        <!-- Action Button -->
+                                        <Border BackgroundColor="{DynamicResource Primary}"
+                                                StrokeThickness="0"
+                                                Stroke="Transparent"
+                                                Margin="0,10,0,0">
+                                            <Border.StrokeShape>
+                                                <RoundRectangle CornerRadius="20"/>
+                                            </Border.StrokeShape>
+                                            
+                                            <Button Text="{Binding ButtonLabel}" 
+                                                    FontSize="16" 
+                                                    FontAttributes="Bold"
+                                                    TextColor="White" 
+                                                    BackgroundColor="Transparent"
+                                                    HeightRequest="45" 
+                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodel:UserDashboardViewModel}}, Path=OpenLinkCommand}"
+                                                    CommandParameter="{Binding TargetUrl}" />
+                                        </Border>
+
+                                        <!-- Metadata -->
+                                        <StackLayout Orientation="Horizontal" Spacing="15" Margin="0,5,0,0">
+                                            <Label Text="{Binding CreatedAt, StringFormat='Added: {0:MMM dd, yyyy}'}" 
+                                                   FontSize="12" 
+                                                   TextColor="{DynamicResource Gray500}" />
+                                            <Label Text="{Binding CreatedBy, StringFormat='By: {0}'}" 
+                                                   FontSize="12" 
+                                                   TextColor="{DynamicResource Gray500}" />
+                                        </StackLayout>
+
+                                    </StackLayout>
+                                </StackLayout>
+                            </Border>
+                        </Grid>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </RefreshView>
+
+        <!-- Error Message -->
+        <StackLayout Grid.Row="2" 
+                     Padding="20,10" 
+                     IsVisible="{Binding HasError}" 
+                     BackgroundColor="{DynamicResource ErrorBackground}">
+            <Label Text="{Binding ErrorMessage}" 
+                   TextColor="Red" 
+                   FontSize="14" 
+                   HorizontalOptions="Center" />
+        </StackLayout>
+
+        <!-- Loading Indicator -->
+        <ActivityIndicator Grid.Row="1" 
+                           IsRunning="{Binding IsBusy}" 
+                           IsVisible="{Binding IsBusy}" 
+                           Color="{DynamicResource Primary}" 
+                           HorizontalOptions="Center" 
+                           VerticalOptions="Center" />
+
+    </Grid>
+
+</ContentPage>
