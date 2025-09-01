@@ -1,14 +1,21 @@
 import logging
 import uuid
-import qrcode
-import io
-import base64
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Tuple, List
 from config import PAYMENT_METHODS, PAYMENT_AMOUNT_USD, PAYMENT_AMOUNT_INR
 from paypal_handler import PayPalHandler
 
 logger = logging.getLogger(__name__)
+
+# QR code functionality (optional)
+try:
+    import qrcode
+    import io
+    import base64
+    QR_AVAILABLE = True
+except ImportError:
+    QR_AVAILABLE = False
+    logger.warning("QR code libraries not available. QR codes will be disabled.")
 
 class PaymentHandler:
     def __init__(self):
@@ -235,6 +242,9 @@ class PaymentHandler:
     
     def _generate_qr_code(self, data: str) -> str:
         """Generate QR code and return as base64 string"""
+        if not QR_AVAILABLE:
+            return None
+            
         try:
             qr = qrcode.QRCode(
                 version=1,
