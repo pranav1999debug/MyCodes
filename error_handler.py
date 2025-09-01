@@ -128,6 +128,10 @@ def rate_limit_check(user_id: int, action: str, limit: int = 10, window: int = 6
     user_actions.append(current_time)
     return True
 
+def log_error(error: Exception, context: str = ""):
+    """Log errors with context"""
+    logging.error(f"ERROR - {context}: {str(error)}", exc_info=True)
+
 def log_security_event(user_id: int, event_type: str, details: str = ""):
     """Log security-related events"""
     logging.warning(f"SECURITY_EVENT - User {user_id} - {event_type}: {details}")

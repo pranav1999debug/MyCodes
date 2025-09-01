@@ -1,8 +1,14 @@
-import logging
-import time
+#!/usr/bin/env python3
+"""
+Simple Telegram Invite Member Bot
+Compatible with python-telegram-bot 20.7
+"""
 
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ParseMode
-from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, MessageHandler, Filters, CallbackContext
+import logging
+import asyncio
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes
+from telegram.constants import ParseMode
 
 from config import (
     TELEGRAM_BOT_TOKEN, TELEGRAM_GROUP_INVITE_LINK, PAYMENT_AMOUNT,
@@ -18,17 +24,15 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-class InviteMemberBot:
+class SimpleInviteBot:
     def __init__(self):
         self.db = DatabaseManager()
         self.paypal_manager = PayPalManager()
         self.usdt_manager = USDTPaymentManager()
-        self.updater = None
     
-    def start_command(self, update: Update, context: CallbackContext) -> None:
+    async def start_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle /start command"""
         user = update.effective_user
-        chat_id = update.effective_chat.id
         
         # Add user to database
         self.db.add_user(
@@ -41,7 +45,7 @@ class InviteMemberBot:
         # Check if user already has access
         user_data = self.db.get_user(user.id)
         if user_data and user_data['payment_status'] == 'verified':
-            update.message.reply_text(
+            await update.message.reply_text(
                 PAYMENT_SUCCESS_MESSAGE.format(invite_link=TELEGRAM_GROUP_INVITE_LINK),
                 parse_mode=ParseMode.HTML
             )
@@ -54,13 +58,13 @@ class InviteMemberBot:
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         
-        update.message.reply_text(
+        await update.message.reply_text(
             WELCOME_MESSAGE,
             reply_markup=reply_markup,
             parse_mode=ParseMode.HTML
         )
     
-    def help_command(self, update: Update, context: CallbackContext) -> None:
+    async def help_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle /help command"""
         help_text = """
 🤖 <b>Invite Member Bot Help</b>
@@ -79,15 +83,15 @@ class InviteMemberBot:
 <b>Support:</b>
 If you have any issues, contact our support team.
         """
-        update.message.reply_text(help_text, parse_mode=ParseMode.HTML)
+        await update.message.reply_text(help_text, parse_mode=ParseMode.HTML)
     
-    def status_command(self, update: Update, context: CallbackContext) -> None:
+    async def status_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle /status command"""
         user = update.effective_user
         user_data = self.db.get_user(user.id)
         
         if not user_data:
-            update.message.reply_text("❌ You haven't started the payment process yet. Use /start to begin.")
+            await update.message.reply_text("❌ You haven't started the payment process yet. Use /start to begin.")
             return
         
         status_emoji = {
@@ -111,27 +115,27 @@ Status: {status_emoji.get(user_data['payment_status'], '❓')} {user_data['payme
         else:
             status_text += "❌ Payment failed. Please try again with /start"
         
-        update.message.reply_text(status_text, parse_mode=ParseMode.HTML)
+        await update.message.reply_text(status_text, parse_mode=ParseMode.HTML)
     
-    def button_callback(self, update: Update, context: CallbackContext) -> None:
+    async def button_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle button callbacks"""
         query = update.callback_query
-        query.answer()
+        await query.answer()
         
         user = update.effective_user
         
         if query.data == "start_payment":
-            self.handle_payment_start(query, user)
+            await self.handle_payment_start(query, user)
         elif query.data == "how_it_works":
-            self.handle_how_it_works(query)
+            await self.handle_how_it_works(query)
         elif query.data.startswith("paypal_"):
-            self.handle_paypal_payment(query, user)
+            await self.handle_paypal_payment(query, user)
         elif query.data.startswith("usdt_"):
-            self.handle_usdt_payment(query, user)
+            await self.handle_usdt_payment(query, user)
         elif query.data.startswith("verify_"):
-            self.handle_payment_verification(query, user)
+            await self.handle_payment_verification(query, user)
     
-    def handle_payment_start(self, query, user):
+    async def handle_payment_start(self, query, user):
         """Handle payment method selection"""
         keyboard = [
             [InlineKeyboardButton("💳 PayPal", callback_data="paypal_payment")],
@@ -148,9 +152,9 @@ Amount: <b>10 USDT</b>
 Select your preferred payment method:
         """
         
-        query.edit_message_text(text, reply_markup=reply_markup, parse_mode=ParseMode.HTML)
+        await query.edit_message_text(text, reply_markup=reply_markup, parse_mode=ParseMode.HTML)
     
-    def handle_how_it_works(self, query):
+    async def handle_how_it_works(self, query):
         """Handle how it works information"""
         text = """
 ℹ️ <b>How It Works</b>
@@ -178,9 +182,9 @@ Contact our support team if you have any questions.
         keyboard = [[InlineKeyboardButton("🔙 Back", callback_data="back_to_start")]]
         reply_markup = InlineKeyboardMarkup(keyboard)
         
-        query.edit_message_text(text, reply_markup=reply_markup, parse_mode=ParseMode.HTML)
+        await query.edit_message_text(text, reply_markup=reply_markup, parse_mode=ParseMode.HTML)
     
-    def handle_paypal_payment(self, query, user):
+    async def handle_paypal_payment(self, query, user):
         """Handle PayPal payment creation"""
         try:
             # Create PayPal payment
@@ -220,21 +224,21 @@ Payment ID: <code>{payment_data['payment_id']}</code>
                 ]
                 reply_markup = InlineKeyboardMarkup(keyboard)
                 
-                query.edit_message_text(text, reply_markup=reply_markup, parse_mode=ParseMode.HTML)
+                await query.edit_message_text(text, reply_markup=reply_markup, parse_mode=ParseMode.HTML)
             else:
-                query.edit_message_text(
+                await query.edit_message_text(
                     "❌ Failed to create payment. Please try again later.",
                     reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Back", callback_data="start_payment")]])
                 )
                 
         except Exception as e:
             logger.error(f"Error creating PayPal payment: {e}")
-            query.edit_message_text(
+            await query.edit_message_text(
                 "❌ An error occurred. Please try again later.",
                 reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Back", callback_data="start_payment")]])
             )
     
-    def handle_usdt_payment(self, query, user):
+    async def handle_usdt_payment(self, query, user):
         """Handle USDT payment creation"""
         try:
             # Create USDT payment
@@ -279,21 +283,21 @@ Payment ID: <code>{payment_data['payment_id']}</code>
                 ]
                 reply_markup = InlineKeyboardMarkup(keyboard)
                 
-                query.edit_message_text(text, reply_markup=reply_markup, parse_mode=ParseMode.HTML)
+                await query.edit_message_text(text, reply_markup=reply_markup, parse_mode=ParseMode.HTML)
             else:
-                query.edit_message_text(
+                await query.edit_message_text(
                     "❌ Failed to create payment. Please try again later.",
                     reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Back", callback_data="start_payment")]])
                 )
                 
         except Exception as e:
             logger.error(f"Error creating USDT payment: {e}")
-            query.edit_message_text(
+            await query.edit_message_text(
                 "❌ An error occurred. Please try again later.",
                 reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Back", callback_data="start_payment")]])
             )
     
-    def handle_payment_verification(self, query, user):
+    async def handle_payment_verification(self, query, user):
         """Handle payment verification"""
         payment_id = query.data.replace("verify_", "")
         
@@ -302,7 +306,7 @@ Payment ID: <code>{payment_data['payment_id']}</code>
             payment_data = self.db.get_payment(payment_id)
             
             if not payment_data:
-                query.edit_message_text(
+                await query.edit_message_text(
                     "❌ Payment not found. Please try again.",
                     reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Back", callback_data="start_payment")]])
                 )
@@ -320,13 +324,13 @@ Payment ID: <code>{payment_data['payment_id']}</code>
                 self.db.update_user_payment_status(user.id, 'verified', payment_id)
                 
                 # Send success message with invite link
-                query.edit_message_text(
+                await query.edit_message_text(
                     PAYMENT_SUCCESS_MESSAGE.format(invite_link=TELEGRAM_GROUP_INVITE_LINK),
                     parse_mode=ParseMode.HTML
                 )
             else:
                 # Payment not verified yet
-                query.edit_message_text(
+                await query.edit_message_text(
                     PAYMENT_PENDING_MESSAGE,
                     reply_markup=InlineKeyboardMarkup([
                         [InlineKeyboardButton("🔄 Check Again", callback_data=f"verify_{payment_id}")],
@@ -337,50 +341,47 @@ Payment ID: <code>{payment_data['payment_id']}</code>
                 
         except Exception as e:
             logger.error(f"Error verifying payment {payment_id}: {e}")
-            query.edit_message_text(
+            await query.edit_message_text(
                 "❌ An error occurred during verification. Please try again later.",
                 reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Back", callback_data="start_payment")]])
             )
     
-    def handle_message(self, update: Update, context: CallbackContext) -> None:
+    async def handle_message(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle regular messages"""
         # For now, just redirect to start command
-        self.start_command(update, context)
+        await self.start_command(update, context)
     
-    def setup_handlers(self):
+    def setup_handlers(self, application: Application):
         """Setup bot handlers"""
         # Command handlers
-        self.updater.dispatcher.add_handler(CommandHandler("start", self.start_command))
-        self.updater.dispatcher.add_handler(CommandHandler("help", self.help_command))
-        self.updater.dispatcher.add_handler(CommandHandler("status", self.status_command))
+        application.add_handler(CommandHandler("start", self.start_command))
+        application.add_handler(CommandHandler("help", self.help_command))
+        application.add_handler(CommandHandler("status", self.status_command))
         
         # Callback query handler
-        self.updater.dispatcher.add_handler(CallbackQueryHandler(self.button_callback))
+        application.add_handler(CallbackQueryHandler(self.button_callback))
         
         # Message handler (for any other messages)
-        self.updater.dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, self.handle_message))
+        application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self.handle_message))
     
-    def run(self):
+    async def run(self):
         """Run the bot"""
-        # Create updater
-        self.updater = Updater(token=TELEGRAM_BOT_TOKEN, use_context=True)
+        # Create application
+        application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
         
         # Setup handlers
-        self.setup_handlers()
+        self.setup_handlers(application)
         
         # Start the bot
-        logger.info("Starting Invite Member Bot...")
+        logger.info("Starting Simple Invite Member Bot...")
         
-        # Start polling
-        self.updater.start_polling()
-        
-        # Keep the bot running
-        self.updater.idle()
+        # Use the simpler run_polling method
+        await application.run_polling(allowed_updates=Update.ALL_TYPES)
 
-def main():
+async def main():
     """Main function"""
-    bot = InviteMemberBot()
-    bot.run()
+    bot = SimpleInviteBot()
+    await bot.run()
 
 if __name__ == '__main__':
-    main()
+    asyncio.run(main())

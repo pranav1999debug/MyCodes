@@ -32,7 +32,7 @@ class BotRunner:
         signal.signal(signal.SIGINT, signal_handler)
         signal.signal(signal.SIGTERM, signal_handler)
     
-    async def run(self):
+    def run(self):
         """Run the bot with error handling"""
         try:
             # Setup logging
@@ -50,7 +50,7 @@ class BotRunner:
             logging.info(f"Bot started at: {datetime.now()}")
             
             # Run the bot
-            await self.bot.run()
+            self.bot.run()
             
         except KeyboardInterrupt:
             logging.info("Bot stopped by user (Ctrl+C)")
@@ -77,7 +77,7 @@ def main():
     
     try:
         runner = BotRunner()
-        asyncio.run(runner.run())
+        runner.run()
     except KeyboardInterrupt:
         print("\n👋 Bot stopped by user")
     except Exception as e:

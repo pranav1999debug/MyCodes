@@ -3,3 +3,69 @@
 2025-09-01 17:06:39,632 - root - INFO - test_logging:163 - Test log message
 2025-09-01 17:06:39,632 - root - WARNING - test_logging:164 - Test warning message
 2025-09-01 17:06:39,632 - root - ERROR - test_logging:165 - Test error message
+2025-09-01 17:30:57,991 - root - INFO - setup_logging:62 - Logging system initialized
+2025-09-01 17:30:57,991 - root - INFO - setup_logging:63 - Log files: logs/bot_20250901.log, logs/errors_20250901.log
+2025-09-01 17:30:57,991 - root - INFO - run:40 - Starting Telegram Invite Member Bot...
+2025-09-01 17:30:57,997 - root - INFO - init_database:47 - Database initialized successfully
+2025-09-01 17:30:57,997 - root - INFO - run:49 - Bot initialized successfully
+2025-09-01 17:30:57,997 - root - INFO - run:50 - Bot started at: 2025-09-01 17:30:57.997820
+2025-09-01 17:30:58,008 - root - ERROR - log_error:133 - ERROR - Bot startup/runtime error: 'Updater' object has no attribute '_Updater__polling_cleanup_cb' and no __dict__ for setting new attributes
+Traceback (most recent call last):
+  File "/workspace/run_bot.py", line 53, in run
+    await self.bot.run()
+  File "/workspace/telegram_bot.py", line 367, in run
+    self.application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
+                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/workspace/venv/lib/python3.13/site-packages/telegram/ext/_applicationbuilder.py", line 312, in build
+    updater = Updater(bot=bot, update_queue=update_queue)
+  File "/workspace/venv/lib/python3.13/site-packages/telegram/ext/_updater.py", line 128, in __init__
+    self.__polling_cleanup_cb: Optional[Callable[[], Coroutine[Any, Any, None]]] = None
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Updater' object has no attribute '_Updater__polling_cleanup_cb' and no __dict__ for setting new attributes
+2025-09-01 17:30:58,009 - root - ERROR - run:59 - Bot crashed with error, shutting down...
+2025-09-01 17:30:58,010 - root - INFO - cleanup:66 - Cleaning up resources...
+2025-09-01 17:30:58,010 - root - INFO - cleanup:68 - Bot shutdown complete
+2025-09-01 17:31:11,236 - root - INFO - setup_logging:62 - Logging system initialized
+2025-09-01 17:31:11,236 - root - INFO - setup_logging:63 - Log files: logs/bot_20250901.log, logs/errors_20250901.log
+2025-09-01 17:31:11,236 - root - INFO - run:40 - Starting Telegram Invite Member Bot...
+2025-09-01 17:31:11,237 - root - INFO - init_database:47 - Database initialized successfully
+2025-09-01 17:31:11,237 - root - INFO - run:49 - Bot initialized successfully
+2025-09-01 17:31:11,237 - root - INFO - run:50 - Bot started at: 2025-09-01 17:31:11.237488
+2025-09-01 17:31:11,250 - root - ERROR - log_error:133 - ERROR - Bot startup/runtime error: 'Updater' object has no attribute '_Updater__polling_cleanup_cb' and no __dict__ for setting new attributes
+Traceback (most recent call last):
+  File "/workspace/run_bot.py", line 53, in run
+    await self.bot.run()
+  File "/workspace/telegram_bot.py", line 367, in run
+    self.application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
+                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/workspace/venv/lib/python3.13/site-packages/telegram/ext/_applicationbuilder.py", line 312, in build
+    updater = Updater(bot=bot, update_queue=update_queue)
+  File "/workspace/venv/lib/python3.13/site-packages/telegram/ext/_updater.py", line 128, in __init__
+    self.__polling_cleanup_cb: Optional[Callable[[], Coroutine[Any, Any, None]]] = None
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Updater' object has no attribute '_Updater__polling_cleanup_cb' and no __dict__ for setting new attributes
+2025-09-01 17:31:11,251 - root - ERROR - run:59 - Bot crashed with error, shutting down...
+2025-09-01 17:31:11,251 - root - INFO - cleanup:66 - Cleaning up resources...
+2025-09-01 17:31:11,251 - root - INFO - cleanup:68 - Bot shutdown complete
+2025-09-01 17:31:26,780 - root - INFO - setup_logging:62 - Logging system initialized
+2025-09-01 17:31:26,780 - root - INFO - setup_logging:63 - Log files: logs/bot_20250901.log, logs/errors_20250901.log
+2025-09-01 17:31:26,780 - root - INFO - run:40 - Starting Telegram Invite Member Bot...
+2025-09-01 17:31:26,780 - root - INFO - init_database:47 - Database initialized successfully
+2025-09-01 17:31:26,780 - root - INFO - run:49 - Bot initialized successfully
+2025-09-01 17:31:26,780 - root - INFO - run:50 - Bot started at: 2025-09-01 17:31:26.780722
+2025-09-01 17:31:26,792 - root - ERROR - log_error:133 - ERROR - Bot startup/runtime error: 'Updater' object has no attribute '_Updater__polling_cleanup_cb' and no __dict__ for setting new attributes
+Traceback (most recent call last):
+  File "/workspace/run_bot.py", line 53, in run
+    await self.bot.run()
+  File "/workspace/telegram_bot.py", line 367, in run
+    self.application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
+                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/workspace/venv/lib/python3.13/site-packages/telegram/ext/_applicationbuilder.py", line 312, in build
+    updater = Updater(bot=bot, update_queue=update_queue)
+  File "/workspace/venv/lib/python3.13/site-packages/telegram/ext/_updater.py", line 128, in __init__
+    self.__polling_cleanup_cb: Optional[Callable[[], Coroutine[Any, Any, None]]] = None
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Updater' object has no attribute '_Updater__polling_cleanup_cb' and no __dict__ for setting new attributes
+2025-09-01 17:31:26,793 - root - ERROR - run:59 - Bot crashed with error, shutting down...
+2025-09-01 17:31:26,793 - root - INFO - cleanup:66 - Cleaning up resources...
+2025-09-01 17:31:26,793 - root - INFO - cleanup:68 - Bot shutdown complete
