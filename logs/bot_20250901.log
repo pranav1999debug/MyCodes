@@ -1,0 +1,5 @@
+2025-09-01 17:06:39,632 - root - INFO - setup_logging:62 - Logging system initialized
+2025-09-01 17:06:39,632 - root - INFO - setup_logging:63 - Log files: logs/bot_20250901.log, logs/errors_20250901.log
+2025-09-01 17:06:39,632 - root - INFO - test_logging:163 - Test log message
+2025-09-01 17:06:39,632 - root - WARNING - test_logging:164 - Test warning message
+2025-09-01 17:06:39,632 - root - ERROR - test_logging:165 - Test error message
