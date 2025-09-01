@@ -1,7 +1,6 @@
 python-telegram-bot==20.7
 paypalrestsdk==1.13.3
-sqlite3
 python-dotenv==1.0.0
 requests==2.31.0
-asyncio
-logging
+qrcode==7.4.2
+Pillow==10.0.1

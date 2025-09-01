@@ -33,11 +33,15 @@ class DatabaseManager:
                     CREATE TABLE IF NOT EXISTS payments (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
                         user_id INTEGER,
-                        payment_id TEXT UNIQUE,
+                        payment_method TEXT,
+                        payment_id TEXT,
+                        payment_ref TEXT UNIQUE,
                         payer_id TEXT,
                         amount REAL,
                         currency TEXT,
                         status TEXT,
+                        transaction_hash TEXT,
+                        verification_screenshot TEXT,
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                         completed_at TIMESTAMP,
                         FOREIGN KEY (user_id) REFERENCES users (user_id)
@@ -176,20 +180,79 @@ class DatabaseManager:
             logging.error(f"Error completing payment session: {e}")
             return False
     
-    def add_payment(self, user_id: int, payment_id: str, payer_id: str, amount: float, currency: str, status: str) -> bool:
+    def add_payment(self, user_id: int, payment_method: str, payment_id: str, payment_ref: str, 
+                   payer_id: str = None, amount: float = 0, currency: str = "", status: str = "pending",
+                   transaction_hash: str = None) -> bool:
         """Add a payment record"""
         try:
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.cursor()
                 cursor.execute('''
-                    INSERT INTO payments (user_id, payment_id, payer_id, amount, currency, status, completed_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)
-                ''', (user_id, payment_id, payer_id, amount, currency, status, datetime.now()))
+                    INSERT INTO payments (user_id, payment_method, payment_id, payment_ref, payer_id, 
+                                        amount, currency, status, transaction_hash, completed_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ''', (user_id, payment_method, payment_id, payment_ref, payer_id, amount, currency, 
+                      status, transaction_hash, datetime.now() if status == "completed" else None))
                 conn.commit()
                 return True
         except sqlite3.Error as e:
             logging.error(f"Error adding payment: {e}")
             return False
+    
+    def get_payment_by_ref(self, payment_ref: str) -> Optional[Dict]:
+        """Get payment by reference"""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute('SELECT * FROM payments WHERE payment_ref = ?', (payment_ref,))
+                row = cursor.fetchone()
+                if row:
+                    columns = [description[0] for description in cursor.description]
+                    return dict(zip(columns, row))
+                return None
+        except sqlite3.Error as e:
+            logging.error(f"Error getting payment by ref: {e}")
+            return None
+    
+    def update_payment_status(self, payment_ref: str, status: str, transaction_hash: str = None) -> bool:
+        """Update payment status"""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                if status == "completed":
+                    cursor.execute('''
+                        UPDATE payments SET status = ?, transaction_hash = ?, completed_at = ?
+                        WHERE payment_ref = ?
+                    ''', (status, transaction_hash, datetime.now(), payment_ref))
+                else:
+                    cursor.execute('''
+                        UPDATE payments SET status = ?, transaction_hash = ?
+                        WHERE payment_ref = ?
+                    ''', (status, transaction_hash, payment_ref))
+                conn.commit()
+                return cursor.rowcount > 0
+        except sqlite3.Error as e:
+            logging.error(f"Error updating payment status: {e}")
+            return False
+    
+    def get_pending_payments(self) -> List[Dict]:
+        """Get all pending payments for admin review"""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute('''
+                    SELECT p.*, u.username, u.first_name, u.last_name 
+                    FROM payments p 
+                    JOIN users u ON p.user_id = u.user_id 
+                    WHERE p.status = "pending" OR p.status = "submitted"
+                    ORDER BY p.created_at DESC
+                ''')
+                rows = cursor.fetchall()
+                columns = [description[0] for description in cursor.description]
+                return [dict(zip(columns, row)) for row in rows]
+        except sqlite3.Error as e:
+            logging.error(f"Error getting pending payments: {e}")
+            return []
     
     def get_user_stats(self) -> Dict:
         """Get user statistics"""

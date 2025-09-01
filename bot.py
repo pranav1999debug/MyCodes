@@ -1,20 +1,22 @@
 import logging
 import asyncio
+import io
+import base64
 from datetime import datetime, timedelta
 from typing import Optional
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, InputFile
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes, MessageHandler, filters
 from telegram.constants import ParseMode
 
 from config import (
     TELEGRAM_BOT_TOKEN, 
     TELEGRAM_GROUP_INVITE_LINK, 
-    PAYMENT_AMOUNT, 
-    PAYMENT_CURRENCY,
-    ADMIN_USER_ID
+    PAYMENT_METHODS,
+    ADMIN_USER_ID,
+    BOT_MODE
 )
 from database import DatabaseManager
-from paypal_handler import PayPalHandler
+from payment_handler import PaymentHandler
 
 # Configure logging
 logging.basicConfig(
@@ -26,7 +28,7 @@ logger = logging.getLogger(__name__)
 class InviteMemberBot:
     def __init__(self):
         self.db = DatabaseManager()
-        self.paypal = PayPalHandler()
+        self.payment_handler = PaymentHandler()
         self.app = None
         
         # For webhook mode (if you want to use webhooks instead of polling)
@@ -45,12 +47,16 @@ class InviteMemberBot:
         # Admin commands
         self.app.add_handler(CommandHandler("admin", self.admin_command))
         self.app.add_handler(CommandHandler("stats", self.stats_command))
+        self.app.add_handler(CommandHandler("pending", self.pending_payments_command))
+        self.app.add_handler(CommandHandler("approve", self.approve_payment_command))
+        self.app.add_handler(CommandHandler("reject", self.reject_payment_command))
         
         # Callback query handler
         self.app.add_handler(CallbackQueryHandler(self.button_callback))
         
-        # Message handler for general messages
+        # Message handler for general messages and photo uploads
         self.app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self.handle_message))
+        self.app.add_handler(MessageHandler(filters.PHOTO, self.handle_photo))
         
         logger.info("Bot application setup complete")
     
@@ -84,7 +90,14 @@ class InviteMemberBot:
 
 Hello {user.first_name}! 👋
 
-To join our exclusive Telegram group, you need to make a one-time payment of **${PAYMENT_AMOUNT} {PAYMENT_CURRENCY}**.
+To join our exclusive Telegram group, you need to make a one-time payment.
+
+**Available Payment Methods:**
+💳 PayPal - $10.00 USD (Instant)
+₿ Bitcoin - $10.00 USD worth
+🪙 TON Coin - $10.00 USD worth  
+🏦 Bank Transfer - ₹830.00 INR
+📱 UPI - ₹830.00 INR
 
 **What you get:**
 • Access to our premium Telegram group
@@ -92,16 +105,15 @@ To join our exclusive Telegram group, you need to make a one-time payment of **$
 • Direct access to community members
 • Lifetime membership
 
-**How it works:**
-1. Click the "💳 Pay Now" button below
-2. Complete the payment via PayPal
-3. Receive your invite link automatically
-
-Ready to join? Click the button below! 👇
+Ready to join? Choose your payment method below! 👇
         """
         
         keyboard = [
-            [InlineKeyboardButton("💳 Pay Now", callback_data="pay_now")],
+            [InlineKeyboardButton("💳 PayPal ($10)", callback_data="pay_paypal")],
+            [InlineKeyboardButton("₿ Bitcoin ($10)", callback_data="pay_bitcoin")],
+            [InlineKeyboardButton("🪙 TON Coin ($10)", callback_data="pay_ton")],
+            [InlineKeyboardButton("🏦 Bank Transfer (₹830)", callback_data="pay_bank_transfer")],
+            [InlineKeyboardButton("📱 UPI (₹830)", callback_data="pay_upi")],
             [InlineKeyboardButton("ℹ️ Help", callback_data="help")],
             [InlineKeyboardButton("📊 My Status", callback_data="status")]
         ]
@@ -124,23 +136,33 @@ Ready to join? Click the button below! 👇
 • `/status` - Check your payment status
 • `/pay` - Start the payment process
 
-**How to join the group:**
-1. Use `/start` to begin
-2. Click "💳 Pay Now" to make payment
-3. Complete PayPal payment
-4. Receive your invite link
+**Payment Methods:**
 
-**Payment Information:**
+**💳 PayPal** - Instant verification
 • Amount: $10.00 USD
-• Method: PayPal
-• One-time payment
-• Lifetime access
+• Process: Click PayPal button → Pay → Get instant access
+
+**₿ Bitcoin** - Manual verification  
+• Amount: $10.00 USD equivalent in BTC
+• Process: Send BTC → Upload screenshot → Wait for approval
+
+**🪙 TON Coin** - Manual verification
+• Amount: $10.00 USD equivalent in TON
+• Process: Send TON → Upload screenshot → Wait for approval
+
+**🏦 Bank Transfer** - Manual verification
+• Amount: ₹830.00 INR
+• Process: Transfer to bank → Upload screenshot → Wait for approval
+
+**📱 UPI** - Manual verification  
+• Amount: ₹830.00 INR
+• Process: Pay via UPI → Upload screenshot → Wait for approval
 
 **Need Support?**
-If you encounter any issues, please contact our support team.
+Contact admin if you encounter any issues.
 
 **Security Note:**
-We use secure PayPal payments. Your financial information is protected.
+All payments are verified before granting access.
         """
         
         await update.message.reply_text(
@@ -170,20 +192,26 @@ We use secure PayPal payments. Your financial information is protected.
             await self.send_invite_link(update, user_id)
         else:
             status_text = f"❌ **Payment Status: PENDING**\n\n" \
-                         f"You haven't completed the payment yet.\n" \
-                         f"Amount required: ${PAYMENT_AMOUNT} {PAYMENT_CURRENCY}\n\n" \
+                         f"You haven't completed the payment yet.\n\n" \
+                         f"Available amounts:\n" \
+                         f"• PayPal: $10.00 USD\n" \
+                         f"• Crypto: $10.00 USD worth\n" \
+                         f"• Bank/UPI: ₹830.00 INR\n\n" \
                          f"Use /pay to start the payment process."
         
-        keyboard = [
-            [InlineKeyboardButton("💳 Pay Now", callback_data="pay_now")] if not has_paid else [],
-            [InlineKeyboardButton("🔄 Refresh Status", callback_data="status")]
-        ]
-        reply_markup = InlineKeyboardMarkup([btn for btn in keyboard if btn])
+        keyboard = []
+        if not has_paid:
+            keyboard = [
+                [InlineKeyboardButton("💳 Choose Payment Method", callback_data="choose_payment")],
+                [InlineKeyboardButton("🔄 Refresh Status", callback_data="status")]
+            ]
+        
+        reply_markup = InlineKeyboardMarkup(keyboard) if keyboard else None
         
         await update.message.reply_text(
             status_text,
             parse_mode=ParseMode.MARKDOWN,
-            reply_markup=reply_markup if keyboard else None
+            reply_markup=reply_markup
         )
     
     async def pay_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -195,7 +223,38 @@ We use secure PayPal payments. Your financial information is protected.
             await update.message.reply_text("✅ You have already completed the payment!")
             return
         
-        await self.initiate_payment(update, user_id)
+        await self.show_payment_methods(update)
+    
+    async def show_payment_methods(self, update):
+        """Show available payment methods"""
+        payment_text = """
+💳 **Choose Your Payment Method**
+
+Select your preferred payment option:
+        """
+        
+        keyboard = [
+            [InlineKeyboardButton("💳 PayPal - $10.00 USD", callback_data="pay_paypal")],
+            [InlineKeyboardButton("₿ Bitcoin - $10.00 USD", callback_data="pay_bitcoin")],
+            [InlineKeyboardButton("🪙 TON Coin - $10.00 USD", callback_data="pay_ton")],
+            [InlineKeyboardButton("🏦 Bank Transfer - ₹830.00", callback_data="pay_bank_transfer")],
+            [InlineKeyboardButton("📱 UPI - ₹830.00", callback_data="pay_upi")],
+            [InlineKeyboardButton("❌ Cancel", callback_data="cancel_payment")]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        if hasattr(update, 'message'):
+            await update.message.reply_text(
+                payment_text,
+                parse_mode=ParseMode.MARKDOWN,
+                reply_markup=reply_markup
+            )
+        else:
+            await update.edit_message_text(
+                payment_text,
+                parse_mode=ParseMode.MARKDOWN,
+                reply_markup=reply_markup
+            )
     
     async def admin_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle /admin command"""
@@ -210,10 +269,15 @@ We use secure PayPal payments. Your financial information is protected.
 
 **Available Commands:**
 • `/stats` - View bot statistics
+• `/pending` - View pending payments
+• `/approve <payment_ref>` - Approve a payment
+• `/reject <payment_ref>` - Reject a payment
 • `/admin` - Show this admin panel
 
-**Quick Stats:**
-Use /stats for detailed statistics.
+**Bot Mode:** Production 🔴
+
+**Quick Actions:**
+Use the commands above to manage payments and users.
         """
         
         await update.message.reply_text(
@@ -240,17 +304,154 @@ Use /stats for detailed statistics.
 • Invited Users: {stats['invited_users']}
 
 💰 **Revenue:**
-• Total Revenue: ${stats['total_revenue']:.2f} {PAYMENT_CURRENCY}
+• Total Revenue: ${stats['total_revenue']:.2f} USD
 
 📈 **Conversion Rate:**
 • Payment Rate: {(stats['paid_users'] / max(stats['total_users'], 1) * 100):.1f}%
 • Invite Rate: {(stats['invited_users'] / max(stats['paid_users'], 1) * 100):.1f}%
+
+🤖 **Bot Mode:** Production
         """
         
         await update.message.reply_text(
             stats_text,
             parse_mode=ParseMode.MARKDOWN
         )
+    
+    async def pending_payments_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Handle /pending command"""
+        user_id = update.effective_user.id
+        
+        if str(user_id) != str(ADMIN_USER_ID):
+            await update.message.reply_text("❌ Access denied. Admin only.")
+            return
+        
+        pending_payments = self.db.get_pending_payments()
+        
+        if not pending_payments:
+            await update.message.reply_text("✅ No pending payments to review.")
+            return
+        
+        for payment in pending_payments[:5]:  # Show first 5
+            payment_text = f"""
+🔍 **Pending Payment Review**
+
+👤 **User:** {payment.get('first_name', 'N/A')} (@{payment.get('username', 'N/A')})
+💳 **Method:** {payment['payment_method'].title()}
+💰 **Amount:** {payment['amount']} {payment['currency']}
+🔖 **Reference:** `{payment['payment_ref']}`
+📅 **Date:** {payment['created_at']}
+
+**Actions:**
+• `/approve {payment['payment_ref']}` - Approve payment
+• `/reject {payment['payment_ref']}` - Reject payment
+            """
+            
+            await update.message.reply_text(
+                payment_text,
+                parse_mode=ParseMode.MARKDOWN
+            )
+    
+    async def approve_payment_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Handle /approve command"""
+        user_id = update.effective_user.id
+        
+        if str(user_id) != str(ADMIN_USER_ID):
+            await update.message.reply_text("❌ Access denied. Admin only.")
+            return
+        
+        if not context.args:
+            await update.message.reply_text("❌ Please provide payment reference: `/approve PAY_XXX_XXX`")
+            return
+        
+        payment_ref = context.args[0]
+        payment = self.db.get_payment_by_ref(payment_ref)
+        
+        if not payment:
+            await update.message.reply_text("❌ Payment not found.")
+            return
+        
+        # Update payment status
+        if self.db.update_payment_status(payment_ref, "completed"):
+            # Mark user as paid
+            self.db.mark_user_paid(payment['user_id'])
+            
+            # Send invite link to user
+            try:
+                await self.app.bot.send_message(
+                    chat_id=payment['user_id'],
+                    text=f"""
+🎉 **Payment Approved!**
+
+Your payment has been verified and approved by admin.
+
+Here's your exclusive invite link:
+{TELEGRAM_GROUP_INVITE_LINK}
+
+Welcome to our premium community! 🚀
+                    """,
+                    parse_mode=ParseMode.MARKDOWN,
+                    disable_web_page_preview=True
+                )
+                
+                # Mark invite as sent
+                self.db.mark_invite_sent(payment['user_id'])
+                
+                await update.message.reply_text(f"✅ Payment {payment_ref} approved and invite sent!")
+                
+            except Exception as e:
+                logger.error(f"Error sending invite: {e}")
+                await update.message.reply_text(f"✅ Payment approved but failed to send invite. Please send manually.")
+        else:
+            await update.message.reply_text("❌ Failed to approve payment.")
+    
+    async def reject_payment_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Handle /reject command"""
+        user_id = update.effective_user.id
+        
+        if str(user_id) != str(ADMIN_USER_ID):
+            await update.message.reply_text("❌ Access denied. Admin only.")
+            return
+        
+        if not context.args:
+            await update.message.reply_text("❌ Please provide payment reference: `/reject PAY_XXX_XXX`")
+            return
+        
+        payment_ref = context.args[0]
+        payment = self.db.get_payment_by_ref(payment_ref)
+        
+        if not payment:
+            await update.message.reply_text("❌ Payment not found.")
+            return
+        
+        # Update payment status
+        if self.db.update_payment_status(payment_ref, "rejected"):
+            # Notify user
+            try:
+                await self.app.bot.send_message(
+                    chat_id=payment['user_id'],
+                    text="""
+❌ **Payment Rejected**
+
+Your payment submission has been reviewed and rejected.
+
+This could be due to:
+• Incorrect amount
+• Invalid transaction
+• Insufficient proof
+
+Please try again with correct details or contact support.
+                    """,
+                    parse_mode=ParseMode.MARKDOWN
+                )
+                
+                await update.message.reply_text(f"❌ Payment {payment_ref} rejected and user notified.")
+                
+            except Exception as e:
+                logger.error(f"Error notifying user: {e}")
+                await update.message.reply_text(f"❌ Payment rejected but failed to notify user.")
+        else:
+            await update.message.reply_text("❌ Failed to reject payment.")
     
     async def button_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle inline button callbacks"""
@@ -260,86 +461,168 @@ Use /stats for detailed statistics.
         user_id = query.from_user.id
         data = query.data
         
-        if data == "pay_now":
-            await self.initiate_payment(query, user_id)
+        if data.startswith("pay_"):
+            method = data.replace("pay_", "")
+            await self.initiate_payment(query, user_id, method)
         elif data == "help":
             await self.help_command(query, context)
         elif data == "status":
             await self.status_command(query, context)
+        elif data == "choose_payment":
+            await self.show_payment_methods(query)
+        elif data == "cancel_payment":
+            await query.edit_message_text("❌ Payment cancelled. Use /start to try again.")
     
-    async def initiate_payment(self, update, user_id: int):
-        """Initiate PayPal payment process"""
+    async def initiate_payment(self, update, user_id: int, method: str):
+        """Initiate payment process for specific method"""
         try:
-            # Generate session ID
-            session_id = PayPalHandler.generate_session_id()
+            if method not in PAYMENT_METHODS:
+                await update.edit_message_text("❌ Invalid payment method.")
+                return
             
-            # Create return URLs (for webhook mode, update base URL)
-            return_url, cancel_url = self.paypal.create_return_urls(
-                self.webhook_base_url, 
-                session_id
-            )
+            # Create payment instructions
+            payment_data = self.payment_handler.create_payment_instructions(method, user_id)
             
-            # Create PayPal payment
-            payment_url, payment_id = self.paypal.create_payment(
+            if not payment_data:
+                await update.edit_message_text("❌ Failed to create payment instructions. Please try again.")
+                return
+            
+            # Store payment in database
+            self.db.add_payment(
                 user_id=user_id,
-                return_url=return_url,
-                cancel_url=cancel_url
+                payment_method=method,
+                payment_id=payment_data.get('payment_id', ''),
+                payment_ref=payment_data['payment_ref'],
+                amount=payment_data['amount'],
+                currency=payment_data['currency'],
+                status="pending"
             )
             
-            if payment_url and payment_id:
-                # Store payment session
-                expires_at = datetime.now() + timedelta(minutes=30)  # 30 minutes expiry
-                self.db.add_payment_session(
-                    user_id=user_id,
-                    session_id=session_id,
-                    payment_url=payment_url,
-                    expires_at=expires_at
-                )
+            if method == 'paypal':
+                await self.handle_paypal_payment(update, payment_data)
+            else:
+                await self.handle_manual_payment(update, payment_data)
                 
-                payment_text = f"""
-💳 **Payment Ready**
+        except Exception as e:
+            logger.error(f"Error initiating payment: {e}")
+            await update.edit_message_text("❌ An error occurred. Please try again later.")
+    
+    async def handle_paypal_payment(self, update, payment_data):
+        """Handle PayPal payment"""
+        payment_text = f"""
+💳 **PayPal Payment Ready**
 
-Amount: **${PAYMENT_AMOUNT} {PAYMENT_CURRENCY}**
+Amount: **${payment_data['amount']} {payment_data['currency']}**
+Reference: `{payment_data['payment_ref']}`
 
 Click the button below to complete your payment via PayPal.
 
 ⏰ This payment link expires in 30 minutes.
-
 After successful payment, you'll automatically receive your invite link!
-                """
+        """
+        
+        keyboard = [
+            [InlineKeyboardButton("💳 Pay with PayPal", url=payment_data['payment_url'])],
+            [InlineKeyboardButton("❌ Cancel", callback_data="cancel_payment")]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        await update.edit_message_text(
+            payment_text,
+            parse_mode=ParseMode.MARKDOWN,
+            reply_markup=reply_markup
+        )
+    
+    async def handle_manual_payment(self, update, payment_data):
+        """Handle manual payment methods"""
+        method = payment_data['method']
+        
+        # Send payment instructions
+        await update.edit_message_text(
+            payment_data['instructions'],
+            parse_mode=ParseMode.MARKDOWN
+        )
+        
+        # Send QR code if available
+        if payment_data.get('qr_code'):
+            try:
+                qr_image_data = base64.b64decode(payment_data['qr_code'])
+                qr_image = io.BytesIO(qr_image_data)
+                qr_image.name = f"{method}_qr.png"
                 
-                keyboard = [
-                    [InlineKeyboardButton("💳 Pay with PayPal", url=payment_url)],
-                    [InlineKeyboardButton("❌ Cancel", callback_data="cancel_payment")]
-                ]
-                reply_markup = InlineKeyboardMarkup(keyboard)
+                await update.get_bot().send_photo(
+                    chat_id=update.effective_chat.id,
+                    photo=InputFile(qr_image),
+                    caption=f"📱 **QR Code for {payment_data['method'].title()} Payment**\n\nScan with your wallet app"
+                )
+            except Exception as e:
+                logger.error(f"Error sending QR code: {e}")
+        
+        # Send follow-up instructions
+        followup_text = f"""
+📤 **Next Steps:**
+
+1. Complete the payment using the details above
+2. Take a screenshot of your successful transaction
+3. Send the screenshot here in this chat
+4. Wait for admin verification (usually within 24 hours)
+
+**Payment Reference:** `{payment_data['payment_ref']}`
+**Status:** Pending Payment
+
+💡 **Tip:** Include the payment reference in your transaction if possible.
+        """
+        
+        await update.get_bot().send_message(
+            chat_id=update.effective_chat.id,
+            text=followup_text,
+            parse_mode=ParseMode.MARKDOWN
+        )
+    
+    async def handle_photo(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Handle photo uploads (payment screenshots)"""
+        user_id = update.effective_user.id
+        
+        # Check if user has pending payments
+        # For simplicity, we'll just acknowledge the screenshot
+        await update.message.reply_text(
+            """
+📸 **Screenshot Received!**
+
+Thank you for submitting your payment proof. 
+
+Your screenshot has been forwarded to our admin for verification.
+You will be notified once your payment is approved (usually within 24 hours).
+
+**Status:** Under Review ⏳
+
+If you have any questions, please contact support.
+            """
+        )
+        
+        # Forward screenshot to admin if configured
+        if ADMIN_USER_ID:
+            try:
+                await context.bot.forward_message(
+                    chat_id=ADMIN_USER_ID,
+                    from_chat_id=update.effective_chat.id,
+                    message_id=update.message.message_id
+                )
                 
-                if hasattr(update, 'message'):
-                    await update.message.reply_text(
-                        payment_text,
-                        parse_mode=ParseMode.MARKDOWN,
-                        reply_markup=reply_markup
-                    )
-                else:
-                    await update.edit_message_text(
-                        payment_text,
-                        parse_mode=ParseMode.MARKDOWN,
-                        reply_markup=reply_markup
-                    )
-            else:
-                error_text = "❌ Failed to create payment. Please try again later."
-                if hasattr(update, 'message'):
-                    await update.message.reply_text(error_text)
-                else:
-                    await update.edit_message_text(error_text)
-                    
-        except Exception as e:
-            logger.error(f"Error initiating payment: {e}")
-            error_text = "❌ An error occurred while processing your request. Please try again."
-            if hasattr(update, 'message'):
-                await update.message.reply_text(error_text)
-            else:
-                await update.edit_message_text(error_text)
+                await context.bot.send_message(
+                    chat_id=ADMIN_USER_ID,
+                    text=f"""
+📸 **Payment Screenshot Received**
+
+👤 **From:** {update.effective_user.first_name} (@{update.effective_user.username or 'N/A'})
+🆔 **User ID:** {user_id}
+📅 **Date:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+
+Use `/pending` to see all pending payments for review.
+                    """
+                )
+            except Exception as e:
+                logger.error(f"Error forwarding to admin: {e}")
     
     async def send_invite_link(self, update, user_id: int):
         """Send the Telegram group invite link to user"""
@@ -400,10 +683,17 @@ Welcome to our community! 🚀
         response_text = """
 👋 Hello! I'm the Premium Group Access Bot.
 
-To get started, use one of these commands:
+**Available Payment Methods:**
+💳 PayPal - $10.00 USD (Instant)
+₿ Bitcoin - $10.00 USD worth
+🪙 TON Coin - $10.00 USD worth
+🏦 Bank Transfer - ₹830.00 INR
+📱 UPI - ₹830.00 INR
+
+**Commands:**
 • /start - Begin the process
-• /pay - Make payment for group access
-• /status - Check your payment status
+• /pay - Choose payment method
+• /status - Check payment status
 • /help - Get help and support
 
 Ready to join our exclusive group? Use /start! 🚀
@@ -416,7 +706,7 @@ Ready to join our exclusive group? Use /start! 🚀
         if not self.app:
             self.setup_application()
         
-        logger.info("Starting bot in polling mode...")
+        logger.info("Starting bot in polling mode (Production)...")
         self.app.run_polling(allowed_updates=Update.ALL_TYPES)
     
     async def run_webhook(self, webhook_url: str, port: int = 8443):
@@ -424,7 +714,7 @@ Ready to join our exclusive group? Use /start! 🚀
         if not self.app:
             self.setup_application()
         
-        logger.info(f"Starting bot in webhook mode on port {port}")
+        logger.info(f"Starting bot in webhook mode on port {port} (Production)")
         await self.app.bot.set_webhook(url=webhook_url)
         
         # Start webhook server
