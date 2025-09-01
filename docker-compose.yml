@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  telegram-bot:
+    build: .
+    container_name: invite-member-bot
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ./bot_database.db:/app/bot_database.db
+    ports:
+      - "8443:8443"  # Only needed for webhook mode
+    command: python run.py --mode polling
+    
+    # For webhook mode, uncomment and modify:
+    # command: python run.py --mode webhook --webhook-url https://your-domain.com/webhook
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sqlite3; sqlite3.connect('bot_database.db').close()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Optional: Add nginx for webhook mode
+  # nginx:
+  #   image: nginx:alpine
+  #   container_name: invite-bot-nginx
+  #   restart: unless-stopped
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   volumes:
+  #     - ./nginx.conf:/etc/nginx/nginx.conf:ro
+  #     - ./ssl:/etc/nginx/ssl:ro
+  #   depends_on:
+  #     - telegram-bot
