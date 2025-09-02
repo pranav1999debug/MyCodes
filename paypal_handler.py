@@ -3,7 +3,7 @@ import logging
 import uuid
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Tuple
-from config import PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET, PAYPAL_MODE, PAYMENT_AMOUNT, PAYMENT_CURRENCY
+from config import PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET, PAYPAL_MODE, PAYMENT_AMOUNT_USD
 
 class PayPalHandler:
     def __init__(self):
@@ -35,14 +35,14 @@ class PayPalHandler:
                         "items": [{
                             "name": "Telegram Group Access",
                             "sku": f"tg_access_{user_id}",
-                            "price": str(PAYMENT_AMOUNT),
-                            "currency": PAYMENT_CURRENCY,
+                            "price": str(PAYMENT_AMOUNT_USD),
+                            "currency": "USD",
                             "quantity": 1
                         }]
                     },
                     "amount": {
-                        "total": str(PAYMENT_AMOUNT),
-                        "currency": PAYMENT_CURRENCY
+                        "total": str(PAYMENT_AMOUNT_USD),
+                        "currency": "USD"
                     },
                     "description": f"Payment for Telegram group access - User ID: {user_id}"
                 }]
