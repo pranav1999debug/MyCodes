@@ -2,7 +2,7 @@ import logging
 import uuid
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Tuple, List
-from config import PAYMENT_METHODS, PAYMENT_AMOUNT_USD, PAYMENT_AMOUNT_INR
+from config import PAYMENT_METHODS, PAYMENT_AMOUNT_USD, PAYMENT_AMOUNT_INR, PAYMENT_AMOUNT_TON
 from paypal_handler import PayPalHandler
 
 logger = logging.getLogger(__name__)
@@ -139,17 +139,17 @@ class PaymentHandler:
         instructions = f"""
 **TON Payment Instructions:**
 
-💰 **Amount:** ${amount} USD worth of TON
+💰 **Amount:** {amount} TON
 📧 **Wallet Address:** `{wallet_address}`
 🔖 **Reference:** `{payment_ref}`
 
 **Steps:**
-1. Send the equivalent of ${amount} USD in TON to the above address
+1. Send exactly {amount} TON to the above address
 2. Include the reference in transaction comment: `{payment_ref}`
 3. Send screenshot of transaction to admin for verification
 4. Wait for confirmation before access is granted
 
-**Important:** Make sure to send the exact USD equivalent in TON at current market rates.
+**Important:** Send exactly {amount} TON coins (not USD equivalent).
 
 **TON URI:** `{ton_uri}`
         """

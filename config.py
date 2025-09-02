@@ -15,6 +15,7 @@ PAYPAL_MODE = os.getenv('PAYPAL_MODE', 'live')  # 'sandbox' or 'live'
 # Payment Configuration
 PAYMENT_AMOUNT_USD = float(os.getenv('PAYMENT_AMOUNT_USD', '10.00'))
 PAYMENT_AMOUNT_INR = float(os.getenv('PAYMENT_AMOUNT_INR', '830.00'))
+PAYMENT_AMOUNT_TON = float(os.getenv('PAYMENT_AMOUNT_TON', '2.0'))
 
 # Cryptocurrency Wallet Addresses
 BITCOIN_WALLET = os.getenv('BITCOIN_WALLET')
@@ -59,8 +60,8 @@ PAYMENT_METHODS = {
         'name': 'TON Coin',
         'symbol': 'TON',
         'wallet': TON_WALLET,
-        'amount': PAYMENT_AMOUNT_USD,
-        'currency': 'USD',
+        'amount': PAYMENT_AMOUNT_TON,
+        'currency': 'TON',
         'network': 'TON Network',
         'confirmations': 1,
         'type': 'manual',
