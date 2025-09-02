@@ -55,37 +55,33 @@ class PaymentHandler:
     def _create_paypal_payment(self, user_id: int, payment_ref: str) -> Dict:
         """Create PayPal payment"""
         try:
-            # Generate session ID
-            session_id = PayPalHandler.generate_session_id()
+            # For now, return manual PayPal instructions due to API issues
+            # You can fix the PayPal API later if needed
             
-            # Create return URLs (update base URL for production)
-            webhook_base_url = "https://your-domain.com"  # Update this
-            return_url, cancel_url = self.paypal_handler.create_return_urls(
-                webhook_base_url, 
-                session_id
-            )
+            instructions = f"""
+**PayPal Payment Instructions:**
+
+💰 **Amount:** ${PAYMENT_AMOUNT_USD} USD
+📧 **PayPal Email:** Contact admin for PayPal email
+🔖 **Reference:** `{payment_ref}`
+
+**Steps:**
+1. Send ${PAYMENT_AMOUNT_USD} USD via PayPal
+2. Include reference `{payment_ref}` in payment note
+3. Send screenshot of transaction to admin for verification
+4. Wait for confirmation before access is granted
+
+**Note:** PayPal integration is temporarily manual. Contact admin for direct PayPal details.
+            """
             
-            # Create PayPal payment
-            payment_url, payment_id = self.paypal_handler.create_payment(
-                user_id=user_id,
-                return_url=return_url,
-                cancel_url=cancel_url
-            )
-            
-            if payment_url and payment_id:
-                return {
-                    'method': 'paypal',
-                    'payment_ref': payment_ref,
-                    'session_id': session_id,
-                    'payment_url': payment_url,
-                    'payment_id': payment_id,
-                    'amount': PAYMENT_AMOUNT_USD,
-                    'currency': 'USD',
-                    'instructions': f"Click the PayPal button to complete your ${PAYMENT_AMOUNT_USD} USD payment.",
-                    'type': 'automated'
-                }
-            else:
-                return None
+            return {
+                'method': 'paypal',
+                'payment_ref': payment_ref,
+                'amount': PAYMENT_AMOUNT_USD,
+                'currency': 'USD',
+                'instructions': instructions,
+                'type': 'manual'
+            }
                 
         except Exception as e:
             logger.error(f"Error creating PayPal payment: {e}")
@@ -96,9 +92,9 @@ class PaymentHandler:
         wallet_address = payment_method['wallet']
         amount = payment_method['amount']
         
-        # Generate QR code for Bitcoin payment
+        # Generate QR code for Bitcoin payment (optional)
         bitcoin_uri = f"bitcoin:{wallet_address}?amount={amount}&label=TelegramGroupAccess&message={payment_ref}"
-        qr_code = self._generate_qr_code(bitcoin_uri)
+        qr_code = self._generate_qr_code(bitcoin_uri) if QR_AVAILABLE else None
         
         instructions = f"""
 **Bitcoin Payment Instructions:**
@@ -109,11 +105,13 @@ class PaymentHandler:
 
 **Steps:**
 1. Send the equivalent of ${amount} USD in Bitcoin to the above address
-2. Include the reference in transaction memo (if possible)
+2. Include the reference in transaction memo (if possible): `{payment_ref}`
 3. Send screenshot of transaction to admin for verification
 4. Wait for 1 confirmation before access is granted
 
 **Important:** Make sure to send the exact USD equivalent in Bitcoin at current market rates.
+
+**Bitcoin URI:** `{bitcoin_uri}`
         """
         
         return {
@@ -134,9 +132,9 @@ class PaymentHandler:
         wallet_address = payment_method['wallet']
         amount = payment_method['amount']
         
-        # Generate QR code for TON payment
+        # Generate QR code for TON payment (optional)
         ton_uri = f"ton://transfer/{wallet_address}?amount={amount}&text={payment_ref}"
-        qr_code = self._generate_qr_code(wallet_address)
+        qr_code = self._generate_qr_code(wallet_address) if QR_AVAILABLE else None
         
         instructions = f"""
 **TON Payment Instructions:**
@@ -152,6 +150,8 @@ class PaymentHandler:
 4. Wait for confirmation before access is granted
 
 **Important:** Make sure to send the exact USD equivalent in TON at current market rates.
+
+**TON URI:** `{ton_uri}`
         """
         
         return {
@@ -210,7 +210,7 @@ class PaymentHandler:
         
         # Generate UPI payment link
         upi_link = f"upi://pay?pa={upi_id}&pn=Pranav Ranjan Singh&am={amount}&cu=INR&tn={payment_ref}"
-        qr_code = self._generate_qr_code(upi_link)
+        qr_code = self._generate_qr_code(upi_link) if QR_AVAILABLE else None
         
         instructions = f"""
 **UPI Payment Instructions:**
