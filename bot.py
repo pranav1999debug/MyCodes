@@ -93,11 +93,11 @@ Hello {user.first_name}! 👋
 To join our exclusive Telegram group, you need to make a one-time payment.
 
 **Available Payment Methods:**
-💳 PayPal - $10.00 USD (Instant)
+💳 PayPal - $10.00 USD
 ₿ Bitcoin - $10.00 USD worth
-🪙 TON Coin - $10.00 USD worth  
-🏦 Bank Transfer - ₹830.00 INR
-📱 UPI - ₹830.00 INR
+🪙 TON Coin - 2.0 TON  
+🏦 Bank Transfer - ₹100.00 INR
+📱 UPI - ₹100.00 INR
 
 **What you get:**
 • Access to our premium Telegram group
@@ -111,9 +111,9 @@ Ready to join? Choose your payment method below! 👇
         keyboard = [
             [InlineKeyboardButton("💳 PayPal ($10)", callback_data="pay_paypal")],
             [InlineKeyboardButton("₿ Bitcoin ($10)", callback_data="pay_bitcoin")],
-            [InlineKeyboardButton("🪙 TON Coin ($10)", callback_data="pay_ton")],
-            [InlineKeyboardButton("🏦 Bank Transfer (₹830)", callback_data="pay_bank_transfer")],
-            [InlineKeyboardButton("📱 UPI (₹830)", callback_data="pay_upi")],
+            [InlineKeyboardButton("🪙 TON Coin (2 TON)", callback_data="pay_ton")],
+            [InlineKeyboardButton("🏦 Bank Transfer (₹100)", callback_data="pay_bank_transfer")],
+            [InlineKeyboardButton("📱 UPI (₹100)", callback_data="pay_upi")],
             [InlineKeyboardButton("ℹ️ Help", callback_data="help")],
             [InlineKeyboardButton("📊 My Status", callback_data="status")]
         ]
@@ -151,11 +151,11 @@ Ready to join? Choose your payment method below! 👇
 • Process: Send TON → Upload screenshot → Wait for approval
 
 **🏦 Bank Transfer** - Manual verification
-• Amount: ₹830.00 INR
+• Amount: ₹100.00 INR
 • Process: Transfer to bank → Upload screenshot → Wait for approval
 
 **📱 UPI** - Manual verification  
-• Amount: ₹830.00 INR
+• Amount: ₹100.00 INR
 • Process: Pay via UPI → Upload screenshot → Wait for approval
 
 **Need Support?**
@@ -195,8 +195,8 @@ All payments are verified before granting access.
                          f"You haven't completed the payment yet.\n\n" \
                          f"Available amounts:\n" \
                          f"• PayPal: $10.00 USD\n" \
-                         f"• Crypto: $10.00 USD worth\n" \
-                         f"• Bank/UPI: ₹830.00 INR\n\n" \
+                         f"• Crypto: $10.00 USD worth / 2.0 TON\n" \
+                         f"• Bank/UPI: ₹100.00 INR\n\n" \
                          f"Use /pay to start the payment process."
         
         keyboard = []
@@ -236,9 +236,9 @@ Select your preferred payment option:
         keyboard = [
             [InlineKeyboardButton("💳 PayPal - $10.00 USD", callback_data="pay_paypal")],
             [InlineKeyboardButton("₿ Bitcoin - $10.00 USD", callback_data="pay_bitcoin")],
-            [InlineKeyboardButton("🪙 TON Coin - $10.00 USD", callback_data="pay_ton")],
-            [InlineKeyboardButton("🏦 Bank Transfer - ₹830.00", callback_data="pay_bank_transfer")],
-            [InlineKeyboardButton("📱 UPI - ₹830.00", callback_data="pay_upi")],
+            [InlineKeyboardButton("🪙 TON Coin - 2.0 TON", callback_data="pay_ton")],
+            [InlineKeyboardButton("🏦 Bank Transfer - ₹100.00", callback_data="pay_bank_transfer")],
+            [InlineKeyboardButton("📱 UPI - ₹100.00", callback_data="pay_upi")],
             [InlineKeyboardButton("❌ Cancel", callback_data="cancel_payment")]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
@@ -686,9 +686,9 @@ Welcome to our community! 🚀
 **Available Payment Methods:**
 💳 PayPal - $10.00 USD (Instant)
 ₿ Bitcoin - $10.00 USD worth
-🪙 TON Coin - $10.00 USD worth
-🏦 Bank Transfer - ₹830.00 INR
-📱 UPI - ₹830.00 INR
+🪙 TON Coin - 2.0 TON
+🏦 Bank Transfer - ₹100.00 INR
+📱 UPI - ₹100.00 INR
 
 **Commands:**
 • /start - Begin the process
