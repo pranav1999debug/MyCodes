@@ -2,7 +2,7 @@ import logging
 import uuid
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Tuple, List
-from config import PAYMENT_METHODS, PAYMENT_AMOUNT_USD, PAYMENT_AMOUNT_INR, PAYMENT_AMOUNT_TON
+from config import PAYMENT_METHODS, PAYMENT_AMOUNT_USD, PAYMENT_AMOUNT_INR, PAYMENT_AMOUNT_TON, PAYMENT_AMOUNT_BTC
 from paypal_handler import PayPalHandler
 
 logger = logging.getLogger(__name__)
@@ -99,17 +99,17 @@ class PaymentHandler:
         instructions = f"""
 **Bitcoin Payment Instructions:**
 
-💰 **Amount:** ${amount} USD worth of Bitcoin
+💰 **Amount:** {amount} BTC
 📧 **Wallet Address:** `{wallet_address}`
 🔖 **Reference:** `{payment_ref}`
 
 **Steps:**
-1. Send the equivalent of ${amount} USD in Bitcoin to the above address
+1. Send exactly {amount} BTC to the above address
 2. Include the reference in transaction memo (if possible): `{payment_ref}`
 3. Send screenshot of transaction to admin for verification
 4. Wait for 1 confirmation before access is granted
 
-**Important:** Make sure to send the exact USD equivalent in Bitcoin at current market rates.
+**Important:** Send exactly {amount} BTC (not USD equivalent).
 
 **Bitcoin URI:** `{bitcoin_uri}`
         """
@@ -119,7 +119,7 @@ class PaymentHandler:
             'payment_ref': payment_ref,
             'wallet_address': wallet_address,
             'amount': amount,
-            'currency': 'USD',
+            'currency': 'BTC',
             'network': payment_method['network'],
             'qr_code': qr_code,
             'bitcoin_uri': bitcoin_uri,

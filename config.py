@@ -16,6 +16,7 @@ PAYPAL_MODE = os.getenv('PAYPAL_MODE', 'live')  # 'sandbox' or 'live'
 PAYMENT_AMOUNT_USD = float(os.getenv('PAYMENT_AMOUNT_USD', '10.00'))
 PAYMENT_AMOUNT_INR = float(os.getenv('PAYMENT_AMOUNT_INR', '830.00'))
 PAYMENT_AMOUNT_TON = float(os.getenv('PAYMENT_AMOUNT_TON', '2.0'))
+PAYMENT_AMOUNT_BTC = float(os.getenv('PAYMENT_AMOUNT_BTC', '0.0001'))
 
 # Cryptocurrency Wallet Addresses
 BITCOIN_WALLET = os.getenv('BITCOIN_WALLET')
@@ -49,8 +50,8 @@ PAYMENT_METHODS = {
         'name': 'Bitcoin (BTC)',
         'symbol': '₿',
         'wallet': BITCOIN_WALLET,
-        'amount': PAYMENT_AMOUNT_USD,
-        'currency': 'USD',
+        'amount': PAYMENT_AMOUNT_BTC,
+        'currency': 'BTC',
         'network': 'Bitcoin Network',
         'confirmations': 1,
         'type': 'manual',

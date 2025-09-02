@@ -94,7 +94,7 @@ To join our exclusive Telegram group, you need to make a one-time payment.
 
 **Available Payment Methods:**
 💳 PayPal - $10.00 USD
-₿ Bitcoin - $10.00 USD worth
+₿ Bitcoin - 0.0001 BTC
 🪙 TON Coin - 2.0 TON  
 🏦 Bank Transfer - ₹100.00 INR
 📱 UPI - ₹100.00 INR
@@ -110,7 +110,7 @@ Ready to join? Choose your payment method below! 👇
         
         keyboard = [
             [InlineKeyboardButton("💳 PayPal ($10)", callback_data="pay_paypal")],
-            [InlineKeyboardButton("₿ Bitcoin ($10)", callback_data="pay_bitcoin")],
+            [InlineKeyboardButton("₿ Bitcoin (0.0001 BTC)", callback_data="pay_bitcoin")],
             [InlineKeyboardButton("🪙 TON Coin (2 TON)", callback_data="pay_ton")],
             [InlineKeyboardButton("🏦 Bank Transfer (₹100)", callback_data="pay_bank_transfer")],
             [InlineKeyboardButton("📱 UPI (₹100)", callback_data="pay_upi")],
@@ -195,7 +195,7 @@ All payments are verified before granting access.
                          f"You haven't completed the payment yet.\n\n" \
                          f"Available amounts:\n" \
                          f"• PayPal: $10.00 USD\n" \
-                         f"• Crypto: $10.00 USD worth / 2.0 TON\n" \
+                         f"• Crypto: 0.0001 BTC / 2.0 TON\n" \
                          f"• Bank/UPI: ₹100.00 INR\n\n" \
                          f"Use /pay to start the payment process."
         
@@ -235,7 +235,7 @@ Select your preferred payment option:
         
         keyboard = [
             [InlineKeyboardButton("💳 PayPal - $10.00 USD", callback_data="pay_paypal")],
-            [InlineKeyboardButton("₿ Bitcoin - $10.00 USD", callback_data="pay_bitcoin")],
+            [InlineKeyboardButton("₿ Bitcoin - 0.0001 BTC", callback_data="pay_bitcoin")],
             [InlineKeyboardButton("🪙 TON Coin - 2.0 TON", callback_data="pay_ton")],
             [InlineKeyboardButton("🏦 Bank Transfer - ₹100.00", callback_data="pay_bank_transfer")],
             [InlineKeyboardButton("📱 UPI - ₹100.00", callback_data="pay_upi")],
@@ -685,7 +685,7 @@ Welcome to our community! 🚀
 
 **Available Payment Methods:**
 💳 PayPal - $10.00 USD (Instant)
-₿ Bitcoin - $10.00 USD worth
+₿ Bitcoin - 0.0001 BTC
 🪙 TON Coin - 2.0 TON
 🏦 Bank Transfer - ₹100.00 INR
 📱 UPI - ₹100.00 INR
